@@ -30,12 +30,9 @@ def end_state_cost(state):
 #print(end_state_cost(((7,7),[(1,2),(7,7),(7,8),(20,16)])))
 
 #GUIDE:
-#   startState=(pen_position in row,col , initial_state where the canvas is all zeros ie Black)
-#   isEnd= if the current_canvas state differ with end state by threshold
-#   newState= new_position and state corresponding given action:
-#       #changes pen coordinates
-#       #cahnges canvas state with cell corresp to pen_coords=1 ie White
-#   getSuccStateAction= for all actions in self.actions: return (state, action, newState given state,action)
+#   startState=(pen_position in row,col , list of all pen coords traversed till now)
+#   isEnd= when the pen coords cross 3/4th of the canvas size
+#   getSuccStateAction= for all actions in self.actions: return (action, newState, cost given state,action)
 
 class StateModel(object):
     def __init__(self,pen,N):
@@ -71,19 +68,19 @@ class StateModel(object):
         
         pen=state[0][:] #make a copy
         trav_list=list(state[1])   #append later
-        #print("states")
         print(pen)
-        cost=end_state_cost(state)
+        curr_cost=len(trav_list)
+
+        coords_list=trav_list.copy()
+        coords_list.append(pen)
         for action in self.actions:
             bound_condn, new_pen=self.isBoundCoords(pen, action)
-            coords_list=trav_list.copy()
-            #print("coords_list bf append", coords_list)
-            coords_list.append(new_pen)
-            #print("new_pen", new_pen)
-            #print("coords_list af append", coords_list)
+            new_state=(new_pen,coords_list)
+            if self.isEnd(new_state): end_cost=end_state_cost(new_state)
+            else: end_cost=0 
+
             if bound_condn:
-                result.append((action, (new_pen,coords_list),cost))
-                #print("result",result)
+                result.append((action, (new_pen,coords_list),curr_cost+end_cost))
 
         #print("result=",state,result)
         return result
@@ -148,7 +145,7 @@ init_canvas=np.zeros((cz,cz))
 end_canvas=np.zeros((cz,cz))
 end_canvas[2:6,4]=1
 thresh=0.01
-pen=[2,4]
+pen=[7,7]
 model=StateModel(pen,cz)
 ss=model.startState()
 print("start_state", ss)
