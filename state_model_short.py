@@ -4,6 +4,8 @@ import collections
 import util
 import sys
 import random
+import util_ext
+import heapq
 import matplotlib.pyplot as plt
 
 sys.setrecursionlimit(10000)
@@ -69,7 +71,7 @@ class StateModel(object):
         pen=state[0][:] #make a copy
         trav_list=list(state[1])   #append later
         print(pen)
-        curr_cost=len(trav_list)
+        curr_cost=1
 
         coords_list=trav_list.copy()
         coords_list.append(pen)
@@ -86,40 +88,6 @@ class StateModel(object):
         return result
 
 
-def dynamicProgramming(problem):
-    #cache=collections.defaultdict(int)
-    cache ={}
-    visited={}
-    def futureCost(state):
-        
-        visited[str(state)]=True
-        print("visited",state,visited.get(str(state)))
-        def notvisited(s):
-           print("notvisited",s, not visited.get(str(s)))
-        #    if visited.get(str(s)) is True: flag=False
-        #    else: flag=True
-        #    print("flag",flag, not visited.get(str(s))) 
-           return not visited.get(str(s))
-            
-
-        if problem.isEnd(state): return 0
-        #print("state",state, type(state))
-        fr_state=tuple(list(state))
-        if fr_state in list(cache.keys()):
-           print("state found in cache")
-           return cache[fr_state]#python dict construct
-        result=min((cost+futureCost(newState),action, newState, cost) for action, newState, cost in problem.getSuccStateAction(state) if notvisited(newState))
-        cache[fr_state]=result
-        return result
-    state=problem.startState()
-    #print("state=", state, type(state))
-    totalCost=futureCost(state)
-    history=[]
-    while not problem.isEnd(state):
-        _,action, newState, cost=cache[state]
-        history.append((action, newState, cost))
-        state=newState
-    return (totalCost, history)
 
 def uniformCostSearch(problem):
     frontier=util.PriorityQueue()
@@ -136,6 +104,37 @@ def printSolution(solution):
     print ("totalCost:", totalCost)
     for item in history:
         print (item)
+
+def heuristic(curr, end):
+    #return abs coords difference.
+    (x1,y1)=curr
+    (x2,y2)=end
+    return abs(x1-x2)+abs(y1-y2)
+
+def a_star(problem):
+    frontier=util_ext.PriorityQueue()
+    startState=problem.startState()
+    print("startState",startState, type(startState))
+    print(hash(startState))
+    frontier.put(startState,0)
+    came_from={}
+    cost_so_far={}
+    came_from[startState]=None
+    cost_so_far[startState]=0
+
+    while not frontier.empty():
+        current=frontier.get()
+        if problem.isEnd(current): break
+        for action, newState, cost in problem.getSuccStateAction(current):
+            new_cost=cost_so_far[current]+cost
+            if newState not in cost_so_far or new_cost<cost_so_far[newState]:
+                cost_so_far[newState]=new_cost
+                #need to pass in current_pen_coords, end_pen_coords to heuristic()
+                priority=new_cost+heuristic()
+                frontier.put(newState,priority)
+                came_from[newState]=current
+
+    return came_from, cost_so_far
 
 
 
@@ -168,4 +167,4 @@ print("result=",sa)
 #
 #printSolution(dynamicProgramming(model))
 #printSolution(uniformCostSearch(model))
-
+print(a_star(model))
