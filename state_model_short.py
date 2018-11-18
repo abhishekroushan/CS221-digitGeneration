@@ -18,7 +18,7 @@ def end_state_cost(state):
     expected_img[9:12,15:20] = 1
     expected_img[12:20,17:21] = 1
     expected_img[18:22,6:18] = 1
-    expected_img[20:23,16:22] = 1
+    expected_img[20:23,16:24] = 1
     expected_img[20:23,6:10] = 1
     #plt.imshow(expected_img)
     #plt.pause(5) 
@@ -32,7 +32,7 @@ def end_state_cost(state):
         cost += 10
     return cost
 
-#print(end_state_cost(((7,7),[(1,2),(7,7),(7,8),(20,16)])))
+print(end_state_cost(((7,7),(7,8),(20,16))))
 
 #GUIDE:
 #   startState=(pen_position in row,col , list of all pen coords traversed till now)
@@ -54,7 +54,7 @@ class StateModel(object):
     def isEnd(self,state):
         #end when the coords reach 3/4th self.N
         curr_coords=state[0]
-        return (curr_coords[0]>self.end) and (curr_coords[1]>self.end)
+        return (curr_coords[0]>=self.end) and (curr_coords[1]>=self.end)
 
     def isBoundCoords(self,curr_pen, action):
         #pen x,y <=N
@@ -119,11 +119,10 @@ def a_star(problem):
     while not frontier.empty(): # and counter < 500:
         counter += 1
         current=frontier.get()
-        #print("")
-        #print(current)
         current_actions = current[0]
         current_state = current[1]
         current_cost = current[2]
+        # if current_state[0][0] >= 21 and current_state[0][1] >= 21: return current
         if problem.isEnd(current_state): return current
         for action, newState, cost in problem.getSuccStateAction(current_state):
             next_cost=current_cost+cost
@@ -151,6 +150,9 @@ for i in range(0,-1):
     test_state = retval[0][1]
     print(retval)
 
-print(a_star(model))
+soln = a_star(model)
+if soln is not None:
+    print("Found solution!")
+    print(soln)
 
 
