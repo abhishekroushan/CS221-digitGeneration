@@ -22,14 +22,14 @@ def end_state_cost(state):
     expected_img[20:23,6:10] = 1
     #plt.imshow(expected_img)
     #plt.pause(5) 
-    cost = 0
+    cost = 1
     for i in range(0,3):
         x = state[i][0]
         y = state[i][1]
         if expected_img[x,y] == 0:
             cost += 2
-    if state[0] == state[2]:
-        cost += 20
+    if state[0][0] == state[2][0] and state[0][1] == state[2][1]:
+        cost += 10
     return cost
 
 #print(end_state_cost(((7,7),[(1,2),(7,7),(7,8),(20,16)])))
@@ -75,16 +75,13 @@ class StateModel(object):
         pen=state[0][:] #make a copy
         prev_pen = state[1]
         
-        curr_cost=1
-
         for action in self.actions:
             bound_condn, new_pen=self.isBoundCoords(pen, action)
             new_state=(new_pen,pen,prev_pen)
             if bound_condn:
-                curr_cost += end_state_cost(new_state)
-                result.append((action, new_state, curr_cost))
+                action_cost = end_state_cost(new_state)
+                result.append((action, new_state, action_cost))
 
-        #print("result=",state,result)
         return result
 
 
@@ -119,21 +116,23 @@ def a_star(problem):
     print(future_cost)
     frontier.put(initial,future_cost)
     counter = 0
-    while not frontier.empty() and counter < 5:
+    while not frontier.empty(): # and counter < 500:
         counter += 1
         current=frontier.get()
+        #print("")
+        #print(current)
         current_actions = current[0]
         current_state = current[1]
         current_cost = current[2]
-        print(current)
         if problem.isEnd(current_state): return current
         for action, newState, cost in problem.getSuccStateAction(current_state):
             next_cost=current_cost+cost
             next_actions = current_actions + [action]
             next_all = (next_actions,newState,next_cost)
-            print(next_all)
+            #print("put")
+            #print(next_all)
             future_cost = heuristic(newState[0],(problem.end,problem.end))
-            print(next_cost+future_cost)
+            #print(next_cost+future_cost)
             frontier.put(next_all,next_cost+future_cost)
     return None
 
