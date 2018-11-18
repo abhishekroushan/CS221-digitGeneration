@@ -40,17 +40,18 @@ class StateModel(object):
     def __init__(self,pen,N):
         self.pen=pen                #(x,y) tuple robot start state
         self.N=N                    #canvas size
+        self.end=N*3/4
         self.actions=["up","down","right","left"]
 
     def startState(self):
         #state=((x,y) of robot ,canvas state)
-        return (self.pen,[])
+        return (self.pen,self.pen,self.pen)
         
 
     def isEnd(self,state):
         #end when the coords reach 3/4th self.N
         curr_coords=state[0]
-        return (curr_coords[0]>self.N*3/4) and (curr_coords[1]>self.N*3/4)
+        return (curr_coords[0]>self.end) and (curr_coords[1]>self.end)
 
     def isBoundCoords(self,curr_pen, action):
         #pen x,y <=N
@@ -69,20 +70,17 @@ class StateModel(object):
         result=[]
         
         pen=state[0][:] #make a copy
-        trav_list=list(state[1])   #append later
-        print(pen)
+        prev_pen = state[1]
+        
         curr_cost=1
 
-        coords_list=trav_list.copy()
-        coords_list.append(pen)
         for action in self.actions:
             bound_condn, new_pen=self.isBoundCoords(pen, action)
-            new_state=(new_pen,coords_list)
-            if self.isEnd(new_state): end_cost=end_state_cost(new_state)
-            else: end_cost=0 
-
+            new_state=(new_pen,pen,prev_pen)
             if bound_condn:
-                result.append((action, (new_pen,coords_list),curr_cost+end_cost))
+                if self.isEnd(new_state): 
+                    curr_cost += end_state_cost(new_state)
+                result.append((action, new_state, curr_cost))
 
         #print("result=",state,result)
         return result
@@ -105,7 +103,7 @@ def printSolution(solution):
     for item in history:
         print (item)
 
-def heuristic(curr, end):
+def heuristic(curr,end):
     #return abs coords difference.
     (x1,y1)=curr
     (x2,y2)=end
@@ -115,7 +113,6 @@ def a_star(problem):
     frontier=util_ext.PriorityQueue()
     startState=problem.startState()
     print("startState",startState, type(startState))
-    print(hash(startState))
     frontier.put(startState,0)
     came_from={}
     cost_so_far={}
@@ -130,7 +127,7 @@ def a_star(problem):
             if newState not in cost_so_far or new_cost<cost_so_far[newState]:
                 cost_so_far[newState]=new_cost
                 #need to pass in current_pen_coords, end_pen_coords to heuristic()
-                priority=new_cost+heuristic()
+                priority=new_cost+heuristic(newState[0],(problem.end,problem.end))
                 frontier.put(newState,priority)
                 came_from[newState]=current
 
@@ -139,23 +136,17 @@ def a_star(problem):
 
 
 #testing
-cz=28
-init_canvas=np.zeros((cz,cz))
-end_canvas=np.zeros((cz,cz))
-end_canvas[2:6,4]=1
-thresh=0.01
-pen=[7,7]
-model=StateModel(pen,cz)
+sz=28
+start_pen=(7,7)
+model=StateModel(start_pen,sz)
 ss=model.startState()
-print("start_state", ss)
-print("-----------------------")
-test_pen=(7,7)
-test_state=(test_pen,[(1,2),(7,7),(7,8),(20,16)])
-print("test")
-print(test_state)
-print("-----------------------------------")
-sa=model.getSuccStateAction(test_state)
-print("result=",sa)
+test_state = ss
+
+for i in range(0,-1):
+    print("-----------------------")
+    retval = model.getSuccStateAction(test_state)
+    test_state = retval[0][1]
+    print(retval)
 #print((sa[1])[2])
 #ea=model.isEnd((sa[1])[1])
 #print("isend=",ea)
