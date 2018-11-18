@@ -12,7 +12,6 @@ sys.setrecursionlimit(10000)
 
 
 def end_state_cost(state):
-    prev_coords = state[1]
     expected_img = np.zeros((28,28))
     expected_img[6:9,6:18] = 1
     expected_img[9:11,6:10] = 1
@@ -22,12 +21,16 @@ def end_state_cost(state):
     expected_img[20:23,16:22] = 1
     expected_img[20:23,6:10] = 1
     #plt.imshow(expected_img)
-    #plt.pause(5)
-    reward = 0
-    for x,y in prev_coords:
-        if expected_img[x,y] == 1:
-            reward += 1
-    return reward
+    #plt.pause(5) 
+    cost = 0
+    for i in range(0,3):
+        x = state[i][0]
+        y = state[i][1]
+        if expected_img[x,y] == 0:
+            cost += 1
+    if state[0] == state[2]:
+        cost += 2
+    return cost
 
 #print(end_state_cost(((7,7),[(1,2),(7,7),(7,8),(20,16)])))
 
@@ -78,8 +81,7 @@ class StateModel(object):
             bound_condn, new_pen=self.isBoundCoords(pen, action)
             new_state=(new_pen,pen,prev_pen)
             if bound_condn:
-                if self.isEnd(new_state): 
-                    curr_cost += end_state_cost(new_state)
+                curr_cost += end_state_cost(new_state)
                 result.append((action, new_state, curr_cost))
 
         #print("result=",state,result)
@@ -112,8 +114,7 @@ def heuristic(curr,end):
 def a_star(problem):
     frontier=util_ext.PriorityQueue()
     startState=problem.startState()
-    print("startState",startState, type(startState))
-    frontier.put(startState,0)
+    frontier.put(startState,heuristic(startState[0],(problem.end,problem.end)))
     came_from={}
     cost_so_far={}
     came_from[startState]=None
@@ -121,6 +122,7 @@ def a_star(problem):
 
     while not frontier.empty():
         current=frontier.get()
+        print(current)
         if problem.isEnd(current): break
         for action, newState, cost in problem.getSuccStateAction(current):
             new_cost=cost_so_far[current]+cost
