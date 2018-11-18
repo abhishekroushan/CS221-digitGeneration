@@ -27,9 +27,9 @@ def end_state_cost(state):
         x = state[i][0]
         y = state[i][1]
         if expected_img[x,y] == 0:
-            cost += 1
+            cost += 2
     if state[0] == state[2]:
-        cost += 2
+        cost += 20
     return cost
 
 #print(end_state_cost(((7,7),[(1,2),(7,7),(7,8),(20,16)])))
@@ -114,26 +114,28 @@ def heuristic(curr,end):
 def a_star(problem):
     frontier=util_ext.PriorityQueue()
     startState=problem.startState()
-    frontier.put(startState,heuristic(startState[0],(problem.end,problem.end)))
-    came_from={}
-    cost_so_far={}
-    came_from[startState]=None
-    cost_so_far[startState]=0
-
-    while not frontier.empty():
+    initial = ([],startState,0)
+    future_cost = heuristic(startState[0],(problem.end,problem.end))
+    print(future_cost)
+    frontier.put(initial,future_cost)
+    counter = 0
+    while not frontier.empty() and counter < 5:
+        counter += 1
         current=frontier.get()
+        current_actions = current[0]
+        current_state = current[1]
+        current_cost = current[2]
         print(current)
-        if problem.isEnd(current): break
-        for action, newState, cost in problem.getSuccStateAction(current):
-            new_cost=cost_so_far[current]+cost
-            if newState not in cost_so_far or new_cost<cost_so_far[newState]:
-                cost_so_far[newState]=new_cost
-                #need to pass in current_pen_coords, end_pen_coords to heuristic()
-                priority=new_cost+heuristic(newState[0],(problem.end,problem.end))
-                frontier.put(newState,priority)
-                came_from[newState]=current
-
-    return came_from, cost_so_far
+        if problem.isEnd(current_state): return current
+        for action, newState, cost in problem.getSuccStateAction(current_state):
+            next_cost=current_cost+cost
+            next_actions = current_actions + [action]
+            next_all = (next_actions,newState,next_cost)
+            print(next_all)
+            future_cost = heuristic(newState[0],(problem.end,problem.end))
+            print(next_cost+future_cost)
+            frontier.put(next_all,next_cost+future_cost)
+    return None
 
 
 
@@ -149,15 +151,7 @@ for i in range(0,-1):
     retval = model.getSuccStateAction(test_state)
     test_state = retval[0][1]
     print(retval)
-#print((sa[1])[2])
-#ea=model.isEnd((sa[1])[1])
-#print("isend=",ea)
-#for item in sa:
-#    print(item[0])
-#    print(item[1])
-#    print(item[2])
-#    print("-----------------------")
-#
-#printSolution(dynamicProgramming(model))
-#printSolution(uniformCostSearch(model))
+
 print(a_star(model))
+
+
