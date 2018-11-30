@@ -1,68 +1,74 @@
-#!/usr/bin/env python
+'''Trains a simple convnet on the MNIST dataset.
 
-import torch
-import torch.nn as nn
-import torchvision as tv
-import matplotlib.pyplot as plt
-import numpy as np
+Gets to 99.25% test accuracy after 12 epochs
+(there is still a lot of margin for parameter tuning).
+16 seconds per epoch on a GRID K520 GPU.
+'''
 
-train_dataset = tv.datasets.MNIST(root='./data',train=True, transform=tv.transforms.ToTensor(), download=True)
-test_dataset = tv.datasets.MNIST(root='./data',train=False, transform=tv.transforms.ToTensor(),download = True)
-train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=100, shuffle=True)
-test_loader = torch.utils.data.DataLoader(dataset=test_dataset,  batch_size=100, shuffle=False)
+from __future__ import print_function
+import keras
+from keras.datasets import mnist
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Conv2D, MaxPooling2D
+from keras import backend as K
 
-class NeuralNet(nn.Module):
-	"""A Neural Network with a hidden layer"""
-	def __init__(self, input_size,hidden_size,output_size):
-		super(NeuralNet, self).__init__()
-		self.layer1 = nn.Linear(input_size, hidden_size)
-		self.layer2 = nn.Linear(hidden_size, output_size)
-		self.relu = nn.ReLU()
+batch_size = 128
+num_classes = 10
+epochs = 2
 
-	def forward(self, x):
-		output = self.layer1(x)
-		output = self.relu(output)
-		output = self.layer2(output)
-		return output
+# input image dimensions
+img_rows, img_cols = 28, 28
 
-input_size = 784
-hidden_size = 500
-output_size = 10
-num_epochs = 5
+# the data, split between train and test sets
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-learning_rate = 0.001
+if K.image_data_format() == 'channels_first':
+    x_train = x_train.reshape(x_train.shape[0], 1, img_rows, img_cols)
+    x_test = x_test.reshape(x_test.shape[0], 1, img_rows, img_cols)
+    input_shape = (1, img_rows, img_cols)
+else:
+    x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
+    x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
+    input_shape = (img_rows, img_cols, 1)
 
-model = NeuralNet(input_size,hidden_size, output_size)
+x_train = x_train.astype('float32')
+x_test = x_test.astype('float32')
+x_train /= 255
+x_test /= 255
+print('x_train shape:', x_train.shape)
+print(x_train.shape[0], 'train samples')
+print(x_test.shape[0], 'test samples')
 
-lossFunction = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+# convert class vectors to binary class matrices
+y_train = keras.utils.to_categorical(y_train, num_classes)
+y_test = keras.utils.to_categorical(y_test, num_classes)
 
-def show_batch(batch):
-    im = tv.utils.make_grid(batch)
-    plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
+model = Sequential()
+model.add(Conv2D(32, kernel_size=(3, 3),
+                 activation='relu',
+                 input_shape=input_shape))
+model.add(Conv2D(64, (3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+model.add(Flatten())
+model.add(Dense(128, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(num_classes, activation='softmax'))
 
-total_step = len(train_loader)
-for epoch in range(num_epochs):
-	for i, (images,labels) in enumerate(train_loader):
-		images = images.reshape(-1,28*28)
-		show_batch(images)
-		out = model(images)
-		loss = lossFunction(out,labels)
+model.compile(loss=keras.losses.categorical_crossentropy,
+              optimizer=keras.optimizers.Adadelta(),
+              metrics=['accuracy'])
 
-		optimizer.zero_grad()
-		loss.backward()
-		optimizer.step()
-
-		if (i+1) % 100 == 0:
-			print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' .format(epoch+1, num_epochs, i+1, total_step, loss.item()))
-
-with torch.no_grad():
-	correct = 0
-	total = 0
-	for images,labels in test_loader:
-		images = images.reshape(-1,28*28)
-		out = model(images)
-		_,predicted = torch.max(out.data,1)
-		total += labels.size(0)
-		correct += (predicted==labels).sum().item()
-		print('Accuracy of the network on the 10000 test images: {} %'.format(100 * correct / total))
+model.fit(x_train, y_train,
+          batch_size=batch_size,
+          epochs=epochs,
+          verbose=1,
+          validation_data=(x_test, y_test))
+score = model.evaluate(x_test, y_test, verbose=0)
+model_json = model.to_json()
+with open("model.json","w") as json_file:
+	json_file.write(model_json)
+model.save_weights("model.h5")
+print('Test loss:', score[0])
+print('Test accuracy:', score[1])
