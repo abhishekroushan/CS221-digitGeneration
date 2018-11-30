@@ -6,6 +6,7 @@ import sys
 import random
 import util_ext
 import heapq
+from visualization import visualize
 import matplotlib.pyplot as plt
 
 sys.setrecursionlimit(10000)
@@ -119,6 +120,8 @@ def a_star(problem):
     while not frontier.empty(): # and counter < 500:
         counter += 1
         current=frontier.get()
+        #print("current")
+        #print(current)
         current_actions = current[0]
         current_state = current[1]
         current_cost = current[2]
@@ -151,8 +154,12 @@ for i in range(0,-1):
     print(retval)
 
 soln = a_star(model)
+
 if soln is not None:
     print("Found solution!")
     print(soln)
+
+soln_actions=soln[0]
+visualize(start_pen, soln_actions,sz)
 
 
