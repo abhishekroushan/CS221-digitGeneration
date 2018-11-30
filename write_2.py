@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.image import imsave
+import pickle
 
 def write_2():
     expected_img = np.zeros((28,28))
@@ -11,7 +12,7 @@ def write_2():
     expected_img[18:22,6:18] = 1
     expected_img[20:23,16:24] = 1
     expected_img[20:23,6:10] = 1
-    imsave('custom2.png',expected_img)
+    pickle.dump(expected_img,open('custom2.pkl','wb'))
     plt.imshow(expected_img)
     plt.pause(5) 
 
