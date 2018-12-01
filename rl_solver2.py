@@ -22,8 +22,8 @@ def evaluate(img):
 	y = loaded_model.predict(img,verbose=1)
 	print(y)
 	prob2 =  y[0,2]	
-	cost = -100*(prob2-0.5)	
-	return cost
+	reward = prob2-0.2	
+	return reward
 
 # Test the image that Clara custom-made
 def test_oracle():
@@ -78,7 +78,7 @@ class RLmodel(object):
 		p_inde = self.p_inde[state[0]]
 		prev = self.getIndex(state[1])
 		prev_prev = self.getIndex(state[2])
-		eta = 0.5
+		eta = 2
 		aug = np.zeros(4)
 		for i in range(0,4):
 			aug[i] = eta*(prev == i)+eta*(prev_prev == i)
@@ -87,7 +87,7 @@ class RLmodel(object):
 		p = ((p_inde[0]+aug[0])/augtot, (p_inde[1]+aug[1])/augtot,(p_inde[2]+aug[2])/augtot, (p_inde[3]+aug[3])/augtot)
 		return p
 
-	def makeCanvas(self,actions):
+	def makeCanvas(self,actions,view):
 		canvas = np.zeros((self.N,self.N))
 		pen = [self.startpen[0], self.startpen[1]]
 		for a in actions:
@@ -97,13 +97,10 @@ class RLmodel(object):
 			elif a == "d": pen[0] += 1
 			elif a == "u": pen[0] -= 1
 			else: print("Invalid action in actions")
-		plt.imshow(canvas)
-		plt.pause(1)	
-		evaluate(canvas)
+		return canvas
 
 def nextAction(probs,actions):
 	rand = random.random()
-	print(rand)
 	if rand<probs[0]: return actions[0]
 	elif rand<probs[0]+probs[1]: return actions[1]
 	elif rand<probs[0]+probs[1]+probs[2]: return actions[2]
@@ -117,15 +114,19 @@ def nextAction(probs,actions):
 # print("Adjusted probs after moving right, down: {}".format(ourmodel.getAdjustedProbs(((7,9),'r','r'))))
 # ourmodel.makeCanvas(['r','r','r','d','d','d'])
 
+pen_start = (7,7)
+sz = 28
 loaded_model = load_json()
-model = RLmodel((7,7),28)
+model = RLmodel(pen_start,sz)
+eta = 0.2
 
-for iter in range(0,10):
+for iteration in range(0,10000):
+	# initialize
 	state = model.startState()
 	num_moves = 0
 	actions = []
-	print(actions)
-	print(state)
+	
+	# one iteration
 	while(num_moves < 100):
 		num_moves += 1
 		probs = model.getAdjustedProbs(state)
@@ -134,8 +135,31 @@ for iter in range(0,10):
 		state = model.getSuccessor(state,next_action) 
 		if(model.isEnd(state)): break
 		actions.append(next_action)
-	model.makeCanvas(actions)
-	# implement learning here
-
-
-
+	
+	# learning
+	canvas = model.makeCanvas(actions,True)
+	reward = evaluate(canvas)
+	print("Reward: {}".format(reward))
+	state = model.startState()
+	plt.imshow(canvas)
+	plt.pause(2)	
+	for action in actions:
+		pen_loc = state[0]
+		action_idx = model.getIndex(action)
+		old_probs = model.p_inde[pen_loc]
+		if reward > 0:
+			adjusts = np.zeros(4)
+			adjusts[action_idx] = reward
+			denom = 1+reward
+		else:
+			adjusts = -reward*np.ones(4)
+			adjusts[action_idx] = 0
+			denom = 1+(-reward*3)
+		new_probs = np.ones(4)*0.25
+		for i in range(0,4):
+			new_probs[i] = (old_probs[i]+adjusts[i])/denom
+		assert(np.abs(np.sum(new_probs)-1) < 0.0001)
+		model.p_inde[pen_loc] = (new_probs[0],new_probs[1],new_probs[2],new_probs[3])
+		state = model.getSuccessor(state,action)
+		
+	
