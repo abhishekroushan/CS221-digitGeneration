@@ -22,7 +22,7 @@ def evaluate(img):
 	y = loaded_model.predict(img,verbose=1)
 	print(y)
 	prob2 =  y[0,2]	
-	reward = prob2-0.2	
+	reward = prob2-0.1	
 	return reward
 
 # Test the image that Clara custom-made
@@ -78,7 +78,7 @@ class RLmodel(object):
 		p_inde = self.p_inde[state[0]]
 		prev = self.getIndex(state[1])
 		prev_prev = self.getIndex(state[2])
-		eta = 2
+		eta = 1
 		aug = np.zeros(4)
 		for i in range(0,4):
 			aug[i] = eta*(prev == i)+eta*(prev_prev == i)
@@ -114,13 +114,13 @@ def nextAction(probs,actions):
 # print("Adjusted probs after moving right, down: {}".format(ourmodel.getAdjustedProbs(((7,9),'r','r'))))
 # ourmodel.makeCanvas(['r','r','r','d','d','d'])
 
-pen_start = (7,7)
+pen_start = (4,4)
 sz = 28
 loaded_model = load_json()
 model = RLmodel(pen_start,sz)
-eta = 0.2
+eta = 0.8
 
-for iteration in range(0,10000):
+for iteration in range(0,10):
 	# initialize
 	state = model.startState()
 	num_moves = 0
@@ -161,5 +161,7 @@ for iteration in range(0,10000):
 		assert(np.abs(np.sum(new_probs)-1) < 0.0001)
 		model.p_inde[pen_loc] = (new_probs[0],new_probs[1],new_probs[2],new_probs[3])
 		state = model.getSuccessor(state,action)
+
+pickle.dump(model.p_inde, open('weights','wb'))
 		
 	
