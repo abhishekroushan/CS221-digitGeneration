@@ -4,6 +4,8 @@ import math, random
 from collections import defaultdict
 from keras.models import model_from_json
 import pickle
+import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
 
 
 #load mnist model
@@ -121,6 +123,8 @@ def rl_algorithm():
         #reached end
         #update reward and problem.action_probs
         score=problem.evaluate(problem.canvas)
+        plt.imshow(problem.canvas)
+        plt.pause(2)
         for items in state_action_list:
             p, a= items
             pen_action_prob=problem.action_probs[p[0], p[1]]
