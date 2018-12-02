@@ -22,7 +22,12 @@ def evaluate(img):
 	y = loaded_model.predict(img,verbose=1)
 	print(y)
 	prob2 =  y[0,2]	
-	reward = prob2-0.1	
+	if prob2>0.4:
+		reward = 1
+	elif prob2>0.1:
+		reward = 0
+	else:
+		reward = -0.1	
 	return reward
 
 # Test the image that Clara custom-made
@@ -51,12 +56,19 @@ class RLmodel(object):
 	def isEnd(self,state):
         	#end when the coords reach 3/4th self.N or go off canvas
 		curr_coords=state[0]
-		if curr_coords[0]<=0 or curr_coords[0]>=self.N-1 or curr_coords[1]<=0 or curr_coords[1]>=self.N-1: return True
+		# if curr_coords[0]<=0 or curr_coords[0]>=self.N-1 or curr_coords[1]<=0 or curr_coords[1]>=self.N-1: return True
 		return ((curr_coords[0]>=self.end) and (curr_coords[1]>=self.end))
 
 	def getActions(self,state):
 		# handle edge cases in isEnd
-		return self.actions
+		curr_coords=state[0]
+		prev = state[1]
+		actions = []
+		if curr_coords[0] > 3 and prev != "d": actions.append("u")
+		if curr_coords[0] < self.N-4 and prev != "u": actions.append("d")
+		if curr_coords[1] > 3 and prev != "r": actions.append("l")
+		if curr_coords[1] < self.N-4 and prev != "l": actions.append("r")
+		return actions
 
 	def getSuccessor(self,state,a):
 		pen, prev, prev_prev = state
@@ -78,7 +90,7 @@ class RLmodel(object):
 		p_inde = self.p_inde[state[0]]
 		prev = self.getIndex(state[1])
 		prev_prev = self.getIndex(state[2])
-		eta = 1
+		eta = 2 
 		aug = np.zeros(4)
 		for i in range(0,4):
 			aug[i] = eta*(prev == i)+eta*(prev_prev == i)
@@ -99,12 +111,15 @@ class RLmodel(object):
 			else: print("Invalid action in actions")
 		return canvas
 
-def nextAction(probs,actions):
-	rand = random.random()
-	if rand<probs[0]: return actions[0]
-	elif rand<probs[0]+probs[1]: return actions[1]
-	elif rand<probs[0]+probs[1]+probs[2]: return actions[2]
-	else: return actions[3]
+def nextAction(probs,actions,all_actions):
+	a = "na"
+	while(a not in actions):
+		rand = random.random()
+		if rand<probs[0]: a = all_actions[0]
+		elif rand<probs[0]+probs[1]: a = all_actions[1]
+		elif rand<probs[0]+probs[1]+probs[2]: a = all_actions[2]
+		else: a = all_actions[3]
+	return a
 
 # TESTING EACH METHOD
 # print(model.getSuccessor(state,'u'))
@@ -118,20 +133,20 @@ pen_start = (4,4)
 sz = 28
 loaded_model = load_json()
 model = RLmodel(pen_start,sz)
-eta = 0.8
+eta = 0.5
 
-for iteration in range(0,10):
+for iteration in range(0,10000):
 	# initialize
 	state = model.startState()
 	num_moves = 0
 	actions = []
 	
 	# one iteration
-	while(num_moves < 100):
+	while(num_moves < 70):
 		num_moves += 1
 		probs = model.getAdjustedProbs(state)
 		possible_actions = model.getActions(state)
-		next_action = nextAction(probs,possible_actions)
+		next_action = nextAction(probs,possible_actions,model.actions)
 		state = model.getSuccessor(state,next_action) 
 		if(model.isEnd(state)): break
 		actions.append(next_action)
@@ -142,8 +157,10 @@ for iteration in range(0,10):
 	print("Reward: {}".format(reward))
 	state = model.startState()
 	plt.imshow(canvas)
-	plt.pause(2)	
-	for action in actions:
+	plt.pause(5)	
+	for i in range(0,len(actions)):
+		action = actions[i]
+		if(i==0): print(action)
 		pen_loc = state[0]
 		action_idx = model.getIndex(action)
 		old_probs = model.p_inde[pen_loc]
@@ -157,10 +174,12 @@ for iteration in range(0,10):
 			denom = 1+(-reward*3)
 		new_probs = np.ones(4)*0.25
 		for i in range(0,4):
-			new_probs[i] = (old_probs[i]+adjusts[i])/denom
+			new_probs[i] = np.mean([(old_probs[i]+adjusts[i])/denom,0.25])
 		assert(np.abs(np.sum(new_probs)-1) < 0.0001)
 		model.p_inde[pen_loc] = (new_probs[0],new_probs[1],new_probs[2],new_probs[3])
 		state = model.getSuccessor(state,action)
+	
+	print(model.p_inde[(4,4)])
 
 pickle.dump(model.p_inde, open('weights','wb'))
 		
