@@ -23,7 +23,7 @@ def evaluate(img):
 	print(y)
 	prob2 =  y[0,2]	
 	if prob2>0.4:
-		reward = 1
+		reward = 2*(prob2-0.4)
 	elif prob2>0.1:
 		reward = 0
 	else:
@@ -36,7 +36,6 @@ def test_oracle():
 	print(img.shape)
 	cost = evaluate(img)
 	print(cost)
-
 
 class RLmodel(object):
 	def __init__(self,pen,N):
@@ -134,13 +133,19 @@ sz = 28
 loaded_model = load_json()
 model = RLmodel(pen_start,sz)
 eta = 0.5
-
+learning_curve = np.zeros(100)
+sumReward = 0
+idx = 0
 for iteration in range(0,10000):
 	# initialize
 	state = model.startState()
 	num_moves = 0
 	actions = []
-	
+	if iteration % 100 == 99:
+		learning_curve[idx] = float(sumReward)/100
+		idx += 1
+	if iteration % 100 == 0:
+		sumReward = 0
 	# one iteration
 	while(num_moves < 70):
 		num_moves += 1
@@ -151,16 +156,20 @@ for iteration in range(0,10000):
 		if(model.isEnd(state)): break
 		actions.append(next_action)
 	
-	# learning
+# learning
 	canvas = model.makeCanvas(actions,True)
 	reward = evaluate(canvas)
+	sumReward += reward
 	print("Reward: {}".format(reward))
 	state = model.startState()
-	plt.imshow(canvas)
-	plt.pause(5)	
+	if iteration % 1000 == 0:
+		plt.imshow(canvas)
+		plt.pause(0.1)	
+	if iteration<10 or iteration %1000 > 90:
+		fname = str(iteration) + "_a.png"
+		plt.imsave(fname,canvas)
 	for i in range(0,len(actions)):
 		action = actions[i]
-		if(i==0): print(action)
 		pen_loc = state[0]
 		action_idx = model.getIndex(action)
 		old_probs = model.p_inde[pen_loc]
@@ -174,13 +183,24 @@ for iteration in range(0,10000):
 			denom = 1+(-reward*3)
 		new_probs = np.ones(4)*0.25
 		for i in range(0,4):
-			new_probs[i] = np.mean([(old_probs[i]+adjusts[i])/denom,0.25])
+			new_probs[i] = (old_probs[i]+adjusts[i])/denom
+		if np.max(new_probs) > 0.85:
+			dom = np.argmax(new_probs)
+			new_probs = np.ones(4)*0.05
+			new_probs[dom] = 0.85
 		assert(np.abs(np.sum(new_probs)-1) < 0.0001)
 		model.p_inde[pen_loc] = (new_probs[0],new_probs[1],new_probs[2],new_probs[3])
 		state = model.getSuccessor(state,action)
 	
-	print(model.p_inde[(4,4)])
 
-pickle.dump(model.p_inde, open('weights','wb'))
-		
+plt.close()
+print("done")
+print(learning_curve)
+plt.plot(np.arange(1,101)*100, learning_curve)
+plt.ylabel('Average Reward from MNIST Classifier')
+plt.xlabel('Training Iterations')
+print("made plot")
+plt.show()
+plt.pause(100)
+	
 	
