@@ -38,8 +38,8 @@ def nextAction(probs,pen):
 canvas = np.zeros((28,28))
 canvas[4,4] = 1
 pen = [4,4]
-prev = random.randint(0,4)
-prev2 = random.randint(0,4)
+prev = random.randint(0,3)
+prev2 = random.randint(0,3)
 num_moves = 0
 while num_moves < 40:
 	probs = getNextActionProbabilities(prev,prev2)
