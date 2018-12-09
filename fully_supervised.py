@@ -52,6 +52,9 @@ print(x_test.shape[0], 'test samples')
 # convert class vectors to binary class matrices
 y_train = keras.utils.to_categorical(y_train, num_classes)
 y_test = keras.utils.to_categorical(y_test, num_classes)
+print("y train/test after to_categorical")
+print("y_train.shape", y_train.shape)
+print("y_test.shape", y_test.shape)
 
 def action_CNN(input_shape, nclasses, data_format, act='relu', init='glorot_uniform'):
   input_img=Input(shape=input_shape)#3x28x28 ex
