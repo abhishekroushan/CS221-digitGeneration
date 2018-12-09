@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import random
 
 # actions correspond to index in [r,l,u,d] 
@@ -37,7 +37,7 @@ def nextAction(probs,pen):
 
 n_examples = 1000
 c2 = np.zeros((70000,28,28,3))#dyn inc #batches
-c3 = np.zeros((70000,4))#dyn inc #batches
+c3 = np.zeros((70000))#dyn inc #batches
 for n in range(0,n_examples):
     canvas = np.zeros((28,28))
     canvas[4,4] = 1
@@ -57,7 +57,8 @@ for n in range(0,n_examples):
         canvas[pen[0],pen[1]] = 1
         c2[(n+1)*num_moves-1,:,:,1]=canvas
         c2[(n+1)*num_moves-1,pen[0],pen[1],2]=1
-        c3[(n+1)*num_moves-1,action]=1
+        #c3[(n+1)*num_moves-1,action]=1
+        c3[(n+1)*num_moves-1]=action
         prev3 = prev2
         prev2 = prev
         prev = action
@@ -71,9 +72,9 @@ x_train=np.array(c2[0:60000, :,:,:])
 print("x_train.shape", x_train.shape)
 x_test=np.array(c2[60001:70000, :,:,:])
 print("x_test.shape", x_test.shape)
-y_train=np.array(c3[0:60000, :])
+y_train=np.array(c3[0:60000])
 print("x_train.shape", y_train.shape)
-y_test=np.array(c3[60001:70000, :])
+y_test=np.array(c3[60001:70000])
 print("x_test.shape", y_test.shape)
 
 np.save('x_train.npy', x_train)
