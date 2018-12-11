@@ -34,10 +34,10 @@ def nextAction(probs,pen):
         elif rand<probs[0]+probs[1]+probs[2]: action=2
         else: action=3
     return action
-
+max_moves = 70
 n_examples = 1000
-c2 = np.zeros((70000,28,28,3))#dyn inc #batches
-c3 = np.zeros((70000))#dyn inc #batches
+x = np.zeros((70000,28,28,3))#dyn inc #batches
+y = np.zeros((70000))#dyn inc #batches
 for n in range(0,n_examples):
     canvas = np.zeros((28,28))
     canvas[4,4] = 1
@@ -46,7 +46,7 @@ for n in range(0,n_examples):
     prev2 = random.randint(0,3)
     prev3 = random.randint(0,3)
     num_moves = 0
-    while num_moves < 70:
+    while num_moves < max_moves:
         probs = getNextActionProbabilities(prev,prev2,prev3)
         action = nextAction(probs,pen)
         #print("action: {}".format(action))
@@ -55,26 +55,26 @@ for n in range(0,n_examples):
         elif action == 2: pen[0] -= 1 #up
         else: pen[0] += 1 #down
         canvas[pen[0],pen[1]] = 1
-        c2[(n+1)*num_moves-1,:,:,1]=canvas
-        c2[(n+1)*num_moves-1,pen[0],pen[1],2]=1
-        #c3[(n+1)*num_moves-1,action]=1
-        c3[(n+1)*num_moves-1]=action
+        print(n*max_moves+num_moves)
+        x[n*max_moves+num_moves,:,:,1]=canvas
+        x[n*max_moves+num_moves,pen[0],pen[1],2]=1
+        y[n*max_moves+num_moves]=action
         prev3 = prev2
         prev2 = prev
         prev = action
         num_moves += 1
     
-    c2[n*num_moves:(n+1)*num_moves,:,:,0]=canvas
+    x[n*num_moves:(n+1)*num_moves,:,:,0]=canvas
     #plt.imshow(canvas)
     #plt.pause(1)
 #random split
-x_train=np.array(c2[0:60000, :,:,:])
+x_train=np.array(x[0:60000, :,:,:])
 print("x_train.shape", x_train.shape)
-x_test=np.array(c2[60001:70000, :,:,:])
+x_test=np.array(x[60001:70000, :,:,:])
 print("x_test.shape", x_test.shape)
-y_train=np.array(c3[0:60000])
+y_train=np.array(y[0:60000])
 print("y_train.shape", y_train.shape)
-y_test=np.array(c3[60001:70000])
+y_test=np.array(y[60001:70000])
 print("y_test.shape", y_test.shape)
 
 np.save('x_train.npy', x_train)
