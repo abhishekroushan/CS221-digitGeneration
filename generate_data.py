@@ -1,5 +1,5 @@
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import random
 
 # actions correspond to index in [r,l,u,d] 
@@ -55,26 +55,32 @@ for n in range(0,n_examples):
         elif action == 2: pen[0] -= 1 #up
         else: pen[0] += 1 #down
         canvas[pen[0],pen[1]] = 1
-        print(n*max_moves+num_moves)
-        x[n*max_moves+num_moves,:,:,1]=canvas
-        x[n*max_moves+num_moves,pen[0],pen[1],2]=1
-        y[n*max_moves+num_moves]=action
+        idx = n*max_moves+num_moves
+        if((idx+1) % 10000 == 0):
+            print('{} out of {} complete'.format(idx+1,70000))
+        x[idx,:,:,1]=canvas
+        x[idx,pen[0],pen[1],2]=1
+        y[idx]=action
         prev3 = prev2
         prev2 = prev
         prev = action
         num_moves += 1
     
     x[n*num_moves:(n+1)*num_moves,:,:,0]=canvas
-    #plt.imshow(canvas)
-    #plt.pause(1)
+plt.imshow(x[10,:,:,0])
+plt.pause(2)
+plt.imshow(x[10,:,:,1])
+plt.pause(2)
+plt.imshow(x[10,:,:,2])
+plt.pause(2)
 #random split
 x_train=np.array(x[0:60000, :,:,:])
 print("x_train.shape", x_train.shape)
-x_test=np.array(x[60001:70000, :,:,:])
+x_test=np.array(x[60000:70000, :,:,:])
 print("x_test.shape", x_test.shape)
 y_train=np.array(y[0:60000])
 print("y_train.shape", y_train.shape)
-y_test=np.array(y[60001:70000])
+y_test=np.array(y[60000:70000])
 print("y_test.shape", y_test.shape)
 
 np.save('x_train.npy', x_train)

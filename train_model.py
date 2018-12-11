@@ -14,11 +14,11 @@ from keras.layers import Conv2D, MaxPooling2D, Activation, Input
 from keras.models import Model
 from keras import backend as K
 import numpy as np
-#import supervised_generator
+import matplotlib.pyplot as plt
 
 batch_size = 1
 num_classes = 4
-epochs = 3
+epochs = 1
 
 # input image dimensions
 img_rows, img_cols = 28, 28
@@ -93,6 +93,17 @@ my_model.save_weights("CNN_model.h5")
 print('Test loss:', score[0])
 print('Test accuracy:', score[1])
 
+#visualize
+for i in range(0,70):
+    x_example = np.zeros((1,28,28,3))
+    x_example[0,:,:,:] = x_train[i,:,:,:]
+    print(type(x_example))
+    y_pr = my_model.predict(x_example)
+    print('Predicted: {}'.format(np.argmax(y_pr)))
+    y_true = y_train[i]
+    print('True: {}'.format(np.argmax(y_true)))
+    plt.imshow(x_train[i,:,:,:])
+    plt.pause(3)
 
 #model = Sequential()
 #model.add(Conv2D(32, kernel_size=(3, 3),
