@@ -50,28 +50,28 @@ for n in range(0,n_examples):
         probs = getNextActionProbabilities(prev,prev2,prev3)
         action = nextAction(probs,pen)
         #print("action: {}".format(action))
-        if action == 0: pen[1] += 1 #right
-        elif action == 1: pen[1] -= 1 #left
-        elif action == 2: pen[0] -= 1 #up
-        else: pen[0] += 1 #down
-        canvas[pen[0],pen[1]] = 1
         idx = n*max_moves+num_moves
         if((idx+1) % 10000 == 0):
             print('{} out of {} complete'.format(idx+1,70000))
         x[idx,:,:,1]=canvas
         x[idx,pen[0],pen[1],2]=1
         y[idx]=action
+        if action == 0: pen[1] += 1 #right
+        elif action == 1: pen[1] -= 1 #left
+        elif action == 2: pen[0] -= 1 #up
+        else: pen[0] += 1 #down
+        canvas[pen[0],pen[1]] = 1
         prev3 = prev2
         prev2 = prev
         prev = action
         num_moves += 1
     
     x[n*num_moves:(n+1)*num_moves,:,:,0]=canvas
-plt.imshow(x[10,:,:,0])
+plt.imshow(x[50,:,:,0])
 plt.pause(2)
-plt.imshow(x[10,:,:,1])
+plt.imshow(x[50,:,:,1])
 plt.pause(2)
-plt.imshow(x[10,:,:,2])
+plt.imshow(x[50,:,:,2])
 plt.pause(2)
 #random split
 x_train=np.array(x[0:60000, :,:,:])
