@@ -34,6 +34,8 @@ def guess_action(canvas,pen):
     print(int(np.floor(r)))
     return actions[int(np.floor(r))]
 
+correct = 0
+incorrect = 0
 for idx in range(0,1000):
     example = np.zeros((28,28,3))
     example[:,:,0] = x_train[idx,:,:,0]
@@ -51,6 +53,12 @@ for idx in range(0,1000):
     print('X,Y: {},{}'.format(pen_x,pen_y))
     print('Guess: {}'.format(guess))
     print('True: {}'.format(true_action))
-    plt.imshow(example)
-    plt.pause(15)
+    if guess == true_action:
+        correct += 1
+    else:
+        incorrect += 1
+    if(idx % 70 < 4):
+        plt.imshow(example)
+        plt.pause(2)
 
+print('Accuracy: {}'.format(correct/float(correct+incorrect)))

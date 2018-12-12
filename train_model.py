@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 batch_size = 1
 num_classes = 4
-epochs = 20
+epochs = 10
 
 # input image dimensions
 img_rows, img_cols = 28, 28
@@ -78,9 +78,9 @@ def create_model():
     my_model.fit(xtrain, ytrain, batch_size=batch_size, epochs=epochs, verbose=1, validation_data=(xtest, ytest))
     score=my_model.evaluate(xtest,ytest, verbose=0)
     model_json = my_model.to_json()
-    with open("CNN_model_20.json","w") as json_file:
+    with open("CNN_model.json","w") as json_file:
         json_file.write(model_json)
-    my_model.save_weights("CNN_model_20.h5")
+    my_model.save_weights("CNN_model.h5")
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
     return my_model
@@ -97,14 +97,16 @@ my_model = create_model()
 my_model = get_model()
 
 #visualize
+actions = ['right', 'left', 'up', 'down']
 for i in range(0,7000):
     x_example = np.zeros((1,28,28,3))
     x_example[0,:,:,:] = x_train[i,:,:,:]
     print(type(x_example))
-    y_pr = my_model.predict(x_example)
-    print('Predicted: {}'.format(np.argmax(y_pr)))
-    y_true = y_train[i]
-    print('True: {}'.format(np.argmax(y_true)))
-    plt.imshow(x_train[i,:,:,:])
-    plt.pause(1)
+    y_pr = np.argmax(my_model.predict(x_example))
+    print('Predicted: {}'.format(actions[y_pr]))
+    y_true = np.argmax(y_train[i])
+    print('True: {}'.format(actions[y_true]))
+    if y_pr != y_true:
+        plt.imshow(x_train[i,:,:,:])
+        plt.pause(5)
 

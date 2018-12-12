@@ -67,12 +67,12 @@ for n in range(0,n_examples):
         num_moves += 1
     
     x[n*num_moves:(n+1)*num_moves,:,:,0]=canvas
-plt.imshow(x[50,:,:,0])
-plt.pause(2)
-plt.imshow(x[50,:,:,1])
-plt.pause(2)
-plt.imshow(x[50,:,:,2])
-plt.pause(2)
+    # plt.imshow(x[n,:,:,0])
+    # plt.pause(2)
+    # plt.imshow(x[n,:,:,1])
+    # plt.pause(2)
+    # plt.imshow(x[n,:,:,2])
+    # plt.pause(2)
 #random split
 x_train=np.array(x[0:60000, :,:,:])
 print("x_train.shape", x_train.shape)
