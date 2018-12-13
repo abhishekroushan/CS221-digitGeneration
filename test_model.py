@@ -42,17 +42,16 @@ def get_artificial_2():
 
 def run_model(model,canvas,corr_actions):
     actions = []
+    action_trans = ['right','left','up','down']
     x = np.zeros((1,28,28,3))
     x[0,:,:,0] = canvas
     pen = [4,4]
     x[0,pen[0],pen[1],1:] = 1
     idx = 0
-    while(sum(sum(x[0,:,:,1])) < sum(sum(canvas))):
-        print(type(x))
+    while(idx < len(corr_actions)):
         y = model.predict(x)
-        plt.imshow(x[0,:,:,:])
-        plt.pause(2)
-        print('Predicted: {}'.format(y))
+        predicted = action_trans[np.argmax(y)]
+        print('Predicted: {}'.format(predicted))
         action = np.argmax(y)
         print('True: {}'.format(corr_actions[idx]))
         idx += 1
@@ -71,13 +70,17 @@ def run_model(model,canvas,corr_actions):
             pen[0] += 1
         x[0,pen[0],pen[1],1:] = 1
     plt.imshow(x[0,:,:,1])
-    plt.pause(10)
+    plt.title('Replica')
+    plt.pause(8)
+    return actions
 
 model = get_model()
 canvas, actions = get_artificial_2()
-print("True")
 plt.imshow(canvas)
-plt.pause(5)
-print("")
+plt.title('Template')
+plt.pause(8)
+guessed_actions = run_model(model,canvas,actions)
+print("True:")
 print(actions)
-run_model(model,canvas,actions)
+print("Algorithm:")
+print(guessed_actions)
